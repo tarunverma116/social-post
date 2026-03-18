@@ -10,7 +10,6 @@ app.config["SECRET_KEY"] = "your_secret_key_here"
 # ✅ DATABASE CONFIG (Render Ready)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Fix for postgres:// issue on Render
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")
 
@@ -34,6 +33,14 @@ loginmanager.login_view = "login"
 @loginmanager.user_loader
 def load_user(user_id):
     return Users.query.get(int(user_id))
+
+
+# ✅ HOME ROUTE (FIXED 🚀)
+@app.route("/")
+def home():
+    if current_user.is_authenticated:
+        return redirect(url_for("dashboard", user_id=current_user.id))
+    return redirect(url_for("login"))
 
 
 # ✅ ROUTES
