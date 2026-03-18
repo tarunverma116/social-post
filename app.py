@@ -35,16 +35,15 @@ def load_user(user_id):
     return Users.query.get(int(user_id))
 
 
-# ✅ HOME ROUTE (FIXED 🚀)
+# ✅ HOME ROUTE (Register First Flow 🚀)
 @app.route("/")
 def home():
     if current_user.is_authenticated:
         return redirect(url_for("dashboard", user_id=current_user.id))
-    return redirect(url_for("login"))
+    return redirect(url_for("register"))
 
 
-# ✅ ROUTES
-
+# ✅ REGISTER
 @app.route("/register", methods=["GET", "POST"])
 def register():
     form = RegisterForm()
@@ -67,6 +66,7 @@ def register():
     return render_template("register.html", form=form)
 
 
+# ✅ LOGIN
 @app.route("/login", methods=["GET", "POST"])
 def login():
     username = request.form.get("username")
@@ -81,6 +81,7 @@ def login():
     return render_template("login.html", error="Invalid credentials")
 
 
+# ✅ DASHBOARD
 @app.route("/dashboard<int:user_id>")
 @login_required
 def dashboard(user_id):
@@ -91,6 +92,7 @@ def dashboard(user_id):
     )
 
 
+# ✅ LOGOUT
 @app.route("/logout", methods=["POST"])
 @login_required
 def logout():
@@ -98,6 +100,7 @@ def logout():
     return redirect("/login")
 
 
+# ✅ DELETE ACCOUNT
 @app.route("/delete_account/<int:user_id>", methods=["GET", "POST"])
 @login_required
 def delete_account(user_id):
@@ -111,6 +114,7 @@ def delete_account(user_id):
     return redirect("/login")
 
 
+# ✅ UPDATE EMAIL
 @app.route("/update_email/<int:user_id>", methods=["POST", "GET"])
 @login_required
 def update_email(user_id):
@@ -129,6 +133,7 @@ def update_email(user_id):
         return render_template("update_email.html", user=user)
 
 
+# ✅ FETCH ALL USERS
 @app.route("/fetch_all")
 @login_required
 def fetch_all():
