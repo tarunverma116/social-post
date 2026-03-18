@@ -1,17 +1,31 @@
 from flask import Flask, render_template, request, redirect, session, url_for
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
-from model.users import Users
-from model.users import db
-
+from model.users import Users, db
 from form import RegisterForm
-
+import os
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "your_secret_key_here"
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    "postgresql://postgres:Nopassword%4003@localhost/test"
-)
 
+# ✅ DATABASE CONFIG (Render Ready)
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# Fix for postgres:// issue on Render
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")
+
+app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+
+# ✅ INIT DB
+db.init_app(app)
+
+with app.app_context():
+    db.create_all()
+
+
+# ✅ LOGIN MANAGER
 loginmanager = LoginManager()
 loginmanager.init_app(app)
 loginmanager.login_view = "login"
@@ -22,11 +36,7 @@ def load_user(user_id):
     return Users.query.get(int(user_id))
 
 
-db.init_app(app)
-
-with app.app_context():
-    db.create_all()
-
+# ✅ ROUTES
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -39,29 +49,39 @@ def register():
 
         user = Users(username=username, email=email)
         user.set_password(password)
+
         db.session.add(user)
         db.session.commit()
+
         return render_template(
             "login.html", message="Registration successful! Please log in."
         )
+
     return render_template("register.html", form=form)
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     username = request.form.get("username")
+    password = request.form.get("password")
+
     user = Users.query.filter_by(username=username).first()
-    if user and user.check_password(request.form.get("password")):
+
+    if user and user.check_password(password):
         login_user(user)
-        print(user.id)
         return redirect(url_for("dashboard", user_id=user.id))
+
     return render_template("login.html", error="Invalid credentials")
 
 
 @app.route("/dashboard<int:user_id>")
 @login_required
 def dashboard(user_id):
-    return render_template("dashboard.html", user_id=user_id, current_user=current_user.username)
+    return render_template(
+        "dashboard.html",
+        user_id=user_id,
+        current_user=current_user.username
+    )
 
 
 @app.route("/logout", methods=["POST"])
@@ -75,9 +95,11 @@ def logout():
 @login_required
 def delete_account(user_id):
     user = Users.query.get(user_id)
+
     if user:
         db.session.delete(user)
         db.session.commit()
+
     session.pop("user_id", None)
     return redirect("/login")
 
@@ -87,13 +109,15 @@ def delete_account(user_id):
 def update_email(user_id):
     if request.method == "POST":
         new_email = request.form.get("new_email")
-        print(f"New Email is {new_email}")
         user = Users.query.get(user_id)
+
         if user:
             user.email = new_email
             db.session.commit()
             return redirect(url_for("dashboard", user_id=user_id))
+
     user = Users.query.get(user_id)
+
     if user:
         return render_template("update_email.html", user=user)
 
@@ -102,10 +126,9 @@ def update_email(user_id):
 @login_required
 def fetch_all():
     users = Users.query.all()
-    for user in users:
-        print("list of users#################:", user.username)
     return render_template("fetch_all_users.html", users=users)
 
 
+# ✅ RUN APP
 if __name__ == "__main__":
     app.run(debug=True)
