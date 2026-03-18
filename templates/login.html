@@ -1,11 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Login</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
     <style>
         * {
@@ -17,28 +14,25 @@
 
         body {
             height: 100vh;
-            background: radial-gradient(circle at top, #111, #000);
+            background: radial-gradient(circle at center, #0a0f2c, #020617);
             display: flex;
             justify-content: center;
             align-items: center;
-            color: #fff;
         }
 
         .card {
             width: 380px;
             padding: 40px;
             border-radius: 20px;
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 215, 0, 0.2);
-            box-shadow: 0 0 40px rgba(255, 215, 0, 0.1);
+            box-shadow: 0 0 40px rgba(0, 123, 255, 0.2);
             text-align: center;
         }
 
-        h2 {
+        .card h2 {
+            color: #fff;
             margin-bottom: 25px;
-            color: #ffd700;
-            letter-spacing: 1px;
         }
 
         .input-group {
@@ -46,94 +40,89 @@
             text-align: left;
         }
 
-        .input-group label {
-            font-size: 13px;
+        label {
             color: #aaa;
+            font-size: 14px;
         }
 
-        .input-group input {
+        input {
             width: 100%;
             padding: 12px;
             margin-top: 6px;
             border-radius: 10px;
             border: none;
             outline: none;
-            background: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.08);
             color: #fff;
             transition: 0.3s;
         }
 
-        .input-group input:focus {
-            box-shadow: 0 0 10px #ffd700;
-            background: rgba(255,255,255,0.08);
+        input:focus {
+            box-shadow: 0 0 10px #3b82f6;
+            background: rgba(255,255,255,0.12);
         }
 
         .btn {
             width: 100%;
-            padding: 13px;
-            border: none;
+            padding: 12px;
             border-radius: 12px;
-            background: linear-gradient(135deg, #ffd700, #b8860b);
-            color: #000;
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
+            border: none;
             margin-top: 10px;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
             transition: 0.3s;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 20px #ffd700;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #3b82f6;
         }
 
-        .footer {
+        .link {
             margin-top: 15px;
-            font-size: 13px;
             color: #aaa;
+            font-size: 14px;
         }
 
-        .footer a {
-            color: #ffd700;
+        .link a {
+            color: #3b82f6;
             text-decoration: none;
         }
 
-        .footer a:hover {
+        .link a:hover {
             text-decoration: underline;
         }
 
         .message {
-            color: #00ff88;
+            color: #22c55e;
             margin-bottom: 10px;
         }
 
-        /* subtle gold glow */
-        .glow {
-            position: absolute;
-            width: 400px;
-            height: 400px;
-            background: #ffd700;
-            filter: blur(150px);
-            opacity: 0.08;
-            z-index: -1;
+        .error {
+            color: #ef4444;
+            margin-bottom: 10px;
         }
     </style>
 </head>
-
 <body>
-
-<div class="glow"></div>
 
 <div class="card">
 
     <h2>Welcome Back</h2>
 
-    <div class="message">
-        {{ message | default('') }}
-    </div>
+    <!-- Success message -->
+    {% if message %}
+        <div class="message">{{ message }}</div>
+    {% endif %}
 
-    <form method="post" action="/login">
+    <!-- Error message -->
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
 
+    <form method="POST" action="/login">
         <div class="input-group">
             <label>Username</label>
             <input type="text" name="username" required>
@@ -147,8 +136,8 @@
         <button class="btn">Login</button>
     </form>
 
-    <div class="footer">
-        Don’t have an account? <a href="/register">Register</a>
+    <div class="link">
+        Don't have an account? <a href="/register">Register</a>
     </div>
 
 </div>
