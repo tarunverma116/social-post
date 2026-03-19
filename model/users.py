@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 import bcrypt
@@ -19,3 +21,9 @@ class Users(db.Model, UserMixin):
         return bcrypt.checkpw(
             password.encode("utf-8"), self.password_hash.encode("utf-8")
         )
+
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))

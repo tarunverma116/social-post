@@ -19,6 +19,7 @@ if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+
 # =========================
 # INIT DB
 # =========================
@@ -26,6 +27,7 @@ db.init_app(app)
 
 with app.app_context():
     db.create_all()
+
 
 # =========================
 # LOGIN MANAGER
@@ -41,12 +43,13 @@ def load_user(user_id):
 
 
 # =========================
-# HOME (FEED)
+# HOME → REDIRECT
 # =========================
 @app.route("/")
 def home():
-    posts = Post.query.order_by(Post.created_at.desc()).all()
-    return render_template("feed.html", posts=posts)
+    if current_user.is_authenticated:
+        return redirect(url_for("dashboard", user_id=current_user.id))
+    return redirect(url_for("login"))
 
 
 # =========================
@@ -61,7 +64,7 @@ def register():
         email = form.email.data
         password = form.password.data
 
-        # 🔥 Prevent duplicate username
+        # 🔥 Check duplicate username
         existing_user = Users.query.filter_by(username=username).first()
         if existing_user:
             return render_template(
@@ -102,16 +105,38 @@ def login():
 
 
 # =========================
-# DASHBOARD
+# DASHBOARD + POSTS
 # =========================
 @app.route("/dashboard<int:user_id>")
 @login_required
 def dashboard(user_id):
+    posts = Post.query.order_by(Post.created_at.desc()).all()
+
     return render_template(
         "dashboard.html",
         user_id=user_id,
-        current_user=current_user.username
+        current_user=current_user,
+        posts=posts
     )
+
+
+# =========================
+# CREATE POST
+# =========================
+@app.route("/create_post", methods=["POST"])
+@login_required
+def create_post():
+    content = request.form.get("content")
+
+    if content:
+        post = Post(
+            content=content,
+            user_id=current_user.id
+        )
+        db.session.add(post)
+        db.session.commit()
+
+    return redirect(url_for("dashboard", user_id=current_user.id))
 
 
 # =========================
@@ -168,25 +193,6 @@ def update_email(user_id):
 def fetch_all():
     users = Users.query.all()
     return render_template("fetch_all_users.html", users=users)
-
-
-# =========================
-# CREATE POST
-# =========================
-@app.route("/create_post", methods=["POST"])
-@login_required
-def create_post():
-    content = request.form.get("content")
-
-    if content:
-        post = Post(
-            content=content,
-            user_id=current_user.id
-        )
-        db.session.add(post)
-        db.session.commit()
-
-    return redirect(url_for("home"))
 
 
 # =========================
