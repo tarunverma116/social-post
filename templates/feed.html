@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Feed</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: radial-gradient(circle, #0a0f2c, #020617);
+    color: white;
+}
+
+/* NAVBAR */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 40px;
+    background: rgba(255,255,255,0.05);
+}
+
+/* POST BOX */
+.post-box {
+    width: 500px;
+    margin: 30px auto;
+    padding: 20px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+}
+
+textarea {
+    width: 100%;
+    height: 80px;
+    border-radius: 10px;
+    border: none;
+    padding: 10px;
+    background: rgba(255,255,255,0.08);
+    color: white;
+}
+
+button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    background: #3b82f6;
+    color: white;
+    cursor: pointer;
+}
+
+/* POSTS */
+.post {
+    width: 500px;
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 15px;
+    background: rgba(255,255,255,0.05);
+}
+
+.post small {
+    color: #aaa;
+}
+</style>
+
+</head>
+<body>
+
+<div class="navbar">
+    <h2>Social Feed</h2>
+    <div>
+        <a href="/dashboard{{current_user.id}}">Dashboard</a>
+    </div>
+</div>
+
+<!-- CREATE POST -->
+<div class="post-box">
+    <form method="POST" action="/create_post">
+        <textarea name="content" placeholder="What's on your mind?"></textarea>
+        <button>Create Post</button>
+    </form>
+</div>
+
+<!-- POSTS -->
+{% for post in posts %}
+<div class="post">
+    <p>{{ post.content }}</p>
+    <small>Posted at {{ post.created_at }}</small>
+</div>
+{% endfor %}
+
+</body>
+</html>

@@ -1,13 +1,16 @@
 from flask import Flask, render_template, request, redirect, session, url_for
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from model.users import Users, db
+from model.posts import Post
 from form import RegisterForm
 import os
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "your_secret_key_here"
 
-# ✅ DATABASE CONFIG (Render Ready)
+# =========================
+# DATABASE CONFIG (Render)
+# =========================
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
@@ -16,15 +19,17 @@ if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-
-# ✅ INIT DB
+# =========================
+# INIT DB
+# =========================
 db.init_app(app)
 
 with app.app_context():
     db.create_all()
 
-
-# ✅ LOGIN MANAGER
+# =========================
+# LOGIN MANAGER
+# =========================
 loginmanager = LoginManager()
 loginmanager.init_app(app)
 loginmanager.login_view = "login"
@@ -35,15 +40,18 @@ def load_user(user_id):
     return Users.query.get(int(user_id))
 
 
-# ✅ HOME ROUTE (Register First Flow 🚀)
+# =========================
+# HOME (FEED)
+# =========================
 @app.route("/")
 def home():
-    if current_user.is_authenticated:
-        return redirect(url_for("dashboard", user_id=current_user.id))
-    return redirect(url_for("register"))
+    posts = Post.query.order_by(Post.created_at.desc()).all()
+    return render_template("feed.html", posts=posts)
 
 
-# ✅ REGISTER
+# =========================
+# REGISTER
+# =========================
 @app.route("/register", methods=["GET", "POST"])
 def register():
     form = RegisterForm()
@@ -53,6 +61,15 @@ def register():
         email = form.email.data
         password = form.password.data
 
+        # 🔥 Prevent duplicate username
+        existing_user = Users.query.filter_by(username=username).first()
+        if existing_user:
+            return render_template(
+                "register.html",
+                form=form,
+                error="Username already exists"
+            )
+
         user = Users(username=username, email=email)
         user.set_password(password)
 
@@ -60,13 +77,16 @@ def register():
         db.session.commit()
 
         return render_template(
-            "login.html", message="Registration successful! Please log in."
+            "login.html",
+            message="Registration successful! Please log in."
         )
 
     return render_template("register.html", form=form)
 
 
-# ✅ LOGIN
+# =========================
+# LOGIN
+# =========================
 @app.route("/login", methods=["GET", "POST"])
 def login():
     username = request.form.get("username")
@@ -81,7 +101,9 @@ def login():
     return render_template("login.html", error="Invalid credentials")
 
 
-# ✅ DASHBOARD
+# =========================
+# DASHBOARD
+# =========================
 @app.route("/dashboard<int:user_id>")
 @login_required
 def dashboard(user_id):
@@ -92,7 +114,9 @@ def dashboard(user_id):
     )
 
 
-# ✅ LOGOUT
+# =========================
+# LOGOUT
+# =========================
 @app.route("/logout", methods=["POST"])
 @login_required
 def logout():
@@ -100,7 +124,9 @@ def logout():
     return redirect("/login")
 
 
-# ✅ DELETE ACCOUNT
+# =========================
+# DELETE ACCOUNT
+# =========================
 @app.route("/delete_account/<int:user_id>", methods=["GET", "POST"])
 @login_required
 def delete_account(user_id):
@@ -114,26 +140,29 @@ def delete_account(user_id):
     return redirect("/login")
 
 
-# ✅ UPDATE EMAIL
+# =========================
+# UPDATE EMAIL
+# =========================
 @app.route("/update_email/<int:user_id>", methods=["POST", "GET"])
 @login_required
 def update_email(user_id):
     if request.method == "POST":
         new_email = request.form.get("new_email")
-        user = Users.query.get(user_id)
 
+        user = Users.query.get(user_id)
         if user:
             user.email = new_email
             db.session.commit()
             return redirect(url_for("dashboard", user_id=user_id))
 
     user = Users.query.get(user_id)
-
     if user:
         return render_template("update_email.html", user=user)
 
 
-# ✅ FETCH ALL USERS
+# =========================
+# FETCH ALL USERS
+# =========================
 @app.route("/fetch_all")
 @login_required
 def fetch_all():
@@ -141,6 +170,27 @@ def fetch_all():
     return render_template("fetch_all_users.html", users=users)
 
 
-# ✅ RUN APP
+# =========================
+# CREATE POST
+# =========================
+@app.route("/create_post", methods=["POST"])
+@login_required
+def create_post():
+    content = request.form.get("content")
+
+    if content:
+        post = Post(
+            content=content,
+            user_id=current_user.id
+        )
+        db.session.add(post)
+        db.session.commit()
+
+    return redirect(url_for("home"))
+
+
+# =========================
+# RUN APP
+# =========================
 if __name__ == "__main__":
     app.run(debug=True)
